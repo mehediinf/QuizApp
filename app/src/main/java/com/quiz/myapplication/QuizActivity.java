@@ -1,109 +1,91 @@
 package com.quiz.myapplication;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
-import java.util.List;
+
+import java.util.ArrayList;
 
 public class QuizActivity extends AppCompatActivity {
 
-    private TextView questionTextView;
-    private RadioGroup radioGroupOptions;
-    private RadioButton radioOption1, radioOption2, radioOption3, radioOption4;
-    private Button btnSubmit;
-
-    private List<Question> questionList;
-    private int currentQuestionIndex = 0;
-    private int score = 0;
+    private LinearLayout questionContainer;
+    private ArrayList<Question> questions;
+    private int currentIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
 
-        // UI এলিমেন্ট ইনিশিয়ালাইজ
-        questionTextView = findViewById(R.id.questionTextView);
-        radioGroupOptions = findViewById(R.id.radioGroupOptions);
-        radioOption1 = findViewById(R.id.radioOption1);
-        radioOption2 = findViewById(R.id.radioOption2);
-        radioOption3 = findViewById(R.id.radioOption3);
-        radioOption4 = findViewById(R.id.radioOption4);
-        btnSubmit = findViewById(R.id.btnSubmit);
+        questionContainer = findViewById(R.id.questionContainer);
+        questions = QuestionBank.getQuestions();
 
-        // QuestionBank থেকে প্রশ্ন লোড করা
-        QuestionBank questionBank = new QuestionBank();
-        questionList = questionBank.getQuestions();
+        loadQuestions();
+    }
 
-        // প্রথম প্রশ্ন দেখানো
-        displayQuestion();
+    private void loadQuestions() {
+        for (Question question : questions) {
+            // Add Subject Title
+            TextView subjectTitle = new TextView(this);
+            subjectTitle.setText(question.getSubject());
+            subjectTitle.setTextSize(18);
+            subjectTitle.setTypeface(Typeface.DEFAULT_BOLD);
+            questionContainer.addView(subjectTitle);
 
-        // Submit বাটনের ক্লিক লিসেনার
-        btnSubmit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // ইউজারের নির্বাচিত অপশন যাচাই করা
-                int selectedOptionId = radioGroupOptions.getCheckedRadioButtonId();
-                if (selectedOptionId == -1) {
-                    Toast.makeText(QuizActivity.this, "Please select an answer", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+            // Add Question
+            TextView questionText = new TextView(this);
+            questionText.setText(question.getQuestionText());
+            questionText.setTextSize(16);
+            questionContainer.addView(questionText);
 
-                // সঠিক উত্তরের সাথে মিল পরীক্ষা
-                checkAnswer(selectedOptionId);
-
-                // পরবর্তী প্রশ্ন দেখানো বা কুইজ শেষ হলে ফলাফল স্ক্রিনে যাওয়া
-                currentQuestionIndex++;
-                if (currentQuestionIndex < questionList.size()) {
-                    displayQuestion();
-                } else {
-                    showResult();
-                }
+            // Add Options
+            RadioGroup optionsGroup = new RadioGroup(this);
+            for (int i = 0; i < question.getOptions().length; i++) {
+                RadioButton option = new RadioButton(this);
+                option.setText(question.getOptions()[i]);
+                option.setId(i);
+                optionsGroup.addView(option);
             }
-        });
-    }
-
-    private void displayQuestion() {
-        // বর্তমান প্রশ্ন এবং অপশনগুলো সেট করা
-        Question currentQuestion = questionList.get(currentQuestionIndex);
-        questionTextView.setText(currentQuestion.getQuestionText());
-        String[] options = currentQuestion.getOptions();
-
-        // প্রতিটি অপশন সেট করা
-        radioOption1.setText(options[0]);
-        radioOption2.setText(options[1]);
-        radioOption3.setText(options[2]);
-        radioOption4.setText(options[3]);
-
-        // পূর্বের সিলেকশন ক্লিয়ার করা
-        radioGroupOptions.clearCheck();
-    }
-
-    private void checkAnswer(int selectedOptionId) {
-        // সঠিক অপশন যাচাই করা
-        int correctAnswerIndex = questionList.get(currentQuestionIndex).getCorrectAnswerIndex();
-        RadioButton selectedRadioButton = findViewById(selectedOptionId);
-        int selectedAnswerIndex = radioGroupOptions.indexOfChild(selectedRadioButton);
-
-        if (selectedAnswerIndex == correctAnswerIndex) {
-            score++;
-            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Wrong answer!", Toast.LENGTH_SHORT).show();
+            questionContainer.addView(optionsGroup);
         }
+
+        // Add Submit Button
+        Button submitButton = new Button(this);
+        submitButton.setText("Submit");
+        submitButton.setOnClickListener(v -> handleSubmit());
+        questionContainer.addView(submitButton);
     }
 
-    private void showResult() {
-        // ফলাফল দেখানোর জন্য ResultActivity তে যাওয়া
+    private void handleSubmit() {
+        int score = 0;
+        int totalQuestions = questions.size();
+        currentIndex = 0; // Reset currentIndex for iteration
+
+        for (int i = 0; i < questionContainer.getChildCount(); i++) {
+            View view = questionContainer.getChildAt(i);
+            if (view instanceof RadioGroup) {
+                RadioGroup group = (RadioGroup) view;
+                int selectedId = group.getCheckedRadioButtonId();
+                if (selectedId != -1 && questions.get(currentIndex).getCorrectAnswerIndex() == selectedId) {
+                    score++;
+                }
+                currentIndex++;
+            }
+        }
+
+        // Move to ResultActivity
         Intent intent = new Intent(QuizActivity.this, ResultActivity.class);
-        intent.putExtra("score", score);
-        intent.putExtra("totalQuestions", questionList.size());
+        intent.putExtra("score", score); // Pass the score
+        intent.putExtra("totalQuestions", totalQuestions); // Pass total questions
         startActivity(intent);
-        finish();
+        finish(); // Close QuizActivity
     }
 }

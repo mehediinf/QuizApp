@@ -5,16 +5,13 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="bottom|center"
-    tools:context=".SplashScreenActivity">
+    tools:context=".Usr_SingUp">
 
 
-    <ProgressBar
-        android:id="@+id/progressBarId"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="40dp"
-        android:indeterminateDrawable="@drawable/ripple" />
+
+    
+
+
 
 
 
