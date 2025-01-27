@@ -7,28 +7,59 @@
     android:orientation="vertical"
     tools:context=".QuizActivity">
 
-    <!-- Timer TextView -->
+    <!-- Question Text -->
     <TextView
-        android:id="@+id/timerTextView"
-        android:layout_width="wrap_content"
+        android:id="@+id/tv_question"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Time Left: 03:00"
+        android:text="Question will appear here"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:layout_gravity="center_horizontal"
-        android:paddingBottom="16dp" />
+        android:paddingBottom="16dp"
+        android:gravity="center"
+        android:textColor="#000000" />
 
-    <!-- Question Container -->
-    <ScrollView
+    <!-- Options -->
+    <RadioGroup
+        android:id="@+id/options_group"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/questionContainer"
-            android:layout_width="match_parent"
+        <RadioButton
+            android:id="@+id/option_1"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+            android:text="Option 1" />
+
+        <RadioButton
+            android:id="@+id/option_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Option 2" />
+
+        <RadioButton
+            android:id="@+id/option_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Option 3" />
+
+        <RadioButton
+            android:id="@+id/option_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Option 4" />
+    </RadioGroup>
+
+    <!-- Next Button -->
+    <Button
+        android:id="@+id/btn_next"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Next"
+        android:backgroundTint="#6200EE"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="16dp" />
 
 </LinearLayout>
 

@@ -1,129 +1,112 @@
 package com.quiz.myapplication;
 
 import android.content.Intent;
-import android.graphics.Typeface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 public class QuizActivity extends AppCompatActivity {
 
-    private LinearLayout questionContainer;
+    private static final String PREFS_NAME = "QuizAppPrefs";
     private ArrayList<Question> questions;
-    private int currentIndex = 0;
-    private TextView timerTextView; // Timer display
-    private CountDownTimer countDownTimer; // Timer instance
-    private static final long TIME_LIMIT = 180000; // 3 minutes in milliseconds
+    private int currentQuestionIndex = 0;
+    private int score = 0;
+
+    private TextView questionTextView;
+    private RadioGroup optionsGroup;
+    private RadioButton option1, option2, option3, option4;
+
+    private JSONArray answeredQuestions = new JSONArray();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
 
-        questionContainer = findViewById(R.id.questionContainer);
-        timerTextView = findViewById(R.id.timerTextView); // Timer TextView in the layout
         questions = QuestionBank.getQuestions();
 
-        startTimer(); // Start the timer
-        loadQuestions();
-    }
+        questionTextView = findViewById(R.id.tv_question);
+        optionsGroup = findViewById(R.id.options_group);
+        option1 = findViewById(R.id.option_1);
+        option2 = findViewById(R.id.option_2);
+        option3 = findViewById(R.id.option_3);
+        option4 = findViewById(R.id.option_4);
+        Button nextButton = findViewById(R.id.btn_next);
 
-    private void startTimer() {
-        countDownTimer = new CountDownTimer(TIME_LIMIT, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                // Update the timer display
-                int minutes = (int) (millisUntilFinished / 1000) / 60;
-                int seconds = (int) (millisUntilFinished / 1000) % 60;
-                timerTextView.setText(String.format("Time Left: %02d:%02d", minutes, seconds));
-            }
+        loadQuestion();
 
-            @Override
-            public void onFinish() {
-                // Time is up, submit the quiz automatically
-                handleSubmit();
-            }
-        };
-        countDownTimer.start();
-    }
+        nextButton.setOnClickListener(v -> {
+            int selectedOptionId = optionsGroup.getCheckedRadioButtonId();
+            if (selectedOptionId != -1) {
+                RadioButton selectedRadioButton = findViewById(selectedOptionId);
+                String selectedAnswer = selectedRadioButton.getText().toString();
+                Question currentQuestion = questions.get(currentQuestionIndex);
 
-    private void loadQuestions() {
-        for (Question question : questions) {
-            // Add Subject Title
-            TextView subjectTitle = new TextView(this);
-            subjectTitle.setText(question.getSubject());
-            subjectTitle.setTextSize(18);
-            subjectTitle.setTypeface(Typeface.DEFAULT_BOLD);
-            questionContainer.addView(subjectTitle);
+                // Record the answer
+                JSONObject answeredQuestion = new JSONObject();
+                try {
+                    answeredQuestion.put("question", currentQuestion.getQuestionText());
+                    answeredQuestion.put("yourAnswer", selectedAnswer);
+                    answeredQuestion.put("correctAnswer", currentQuestion.getOptions()[currentQuestion.getCorrectAnswerIndex()]);
+                    answeredQuestions.put(answeredQuestion);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
-            // Add Question
-            TextView questionText = new TextView(this);
-            questionText.setText(question.getQuestionText());
-            questionText.setTextSize(16);
-            questionContainer.addView(questionText);
-
-            // Add Options
-            RadioGroup optionsGroup = new RadioGroup(this);
-            for (int i = 0; i < question.getOptions().length; i++) {
-                RadioButton option = new RadioButton(this);
-                option.setText(question.getOptions()[i]);
-                option.setId(i);
-
-                // Add Click Listener to Make it Unclickable After Selection
-                option.setOnClickListener(v -> {
-                    // Disable all options in the group after one is selected
-                    for (int j = 0; j < optionsGroup.getChildCount(); j++) {
-                        optionsGroup.getChildAt(j).setClickable(false);
-                    }
-                });
-
-                optionsGroup.addView(option);
-            }
-            questionContainer.addView(optionsGroup);
-        }
-
-        // Add Submit Button
-        Button submitButton = new Button(this);
-        submitButton.setText("Submit");
-        submitButton.setOnClickListener(v -> handleSubmit());
-        questionContainer.addView(submitButton);
-    }
-
-    private void handleSubmit() {
-        if (countDownTimer != null) {
-            countDownTimer.cancel(); // Stop the timer if quiz is submitted
-        }
-
-        int score = 0;
-        int totalQuestions = questions.size();
-        currentIndex = 0; // Reset currentIndex for iteration
-
-        for (int i = 0; i < questionContainer.getChildCount(); i++) {
-            View view = questionContainer.getChildAt(i);
-            if (view instanceof RadioGroup) {
-                RadioGroup group = (RadioGroup) view;
-                int selectedId = group.getCheckedRadioButtonId();
-                if (selectedId != -1 && questions.get(currentIndex).getCorrectAnswerIndex() == selectedId) {
+                if (selectedAnswer.equals(currentQuestion.getOptions()[currentQuestion.getCorrectAnswerIndex()])) {
                     score++;
                 }
-                currentIndex++;
+
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.size()) {
+                    loadQuestion();
+                } else {
+                    saveResults();
+                    Intent intent = new Intent(QuizActivity.this, ResultActivity.class);
+                    intent.putExtra("score", score);
+                    intent.putExtra("totalQuestions", questions.size());
+                    startActivity(intent);
+                    finish();
+                }
             }
+        });
+    }
+
+    private void loadQuestion() {
+        Question question = questions.get(currentQuestionIndex);
+        questionTextView.setText(question.getQuestionText());
+        option1.setText(question.getOptions()[0]);
+        option2.setText(question.getOptions()[1]);
+        option3.setText(question.getOptions()[2]);
+        option4.setText(question.getOptions()[3]);
+        optionsGroup.clearCheck();
+    }
+
+    private void saveResults() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        JSONObject examDetails = new JSONObject();
+        try {
+            examDetails.put("score", score);
+            examDetails.put("totalQuestions", questions.size());
+            examDetails.put("answeredQuestions", answeredQuestions);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
-        // Move to ResultActivity
-        Intent intent = new Intent(QuizActivity.this, ResultActivity.class);
-        intent.putExtra("score", score); // Pass the score
-        intent.putExtra("totalQuestions", totalQuestions); // Pass total questions
-        startActivity(intent);
-        finish(); // Close QuizActivity
+        editor.putString("examDetails", examDetails.toString());
+        editor.apply();
     }
 }

@@ -1,6 +1,5 @@
 package com.quiz.myapplication;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -9,67 +8,48 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class ResultActivity extends AppCompatActivity {
 
     private static final String PREFS_NAME = "QuizAppPrefs";
-    private static final String KEY_BEST_SCORE = "BestScore";
-    private static final String KEY_TOTAL_SCORE = "TotalScore";
-    private static final String KEY_TOTAL_QUIZZES = "TotalQuizzes";
 
-    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
 
-        // Retrieve data from Intent
-        int score = getIntent().getIntExtra("score", 0);
-        int totalQuestions = getIntent().getIntExtra("totalQuestions", 0);
+        TextView resultTextView = findViewById(R.id.tv_result);
+        Button previewButton = findViewById(R.id.btn_preview);
+        Button restartButton = findViewById(R.id.btn_restart);
 
-        // SharedPreferences to store and retrieve data
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
+        String examDetailsJson = prefs.getString("examDetails", "");
 
-        // Get previous best score, total score, and total quizzes
-        int bestScore = prefs.getInt(KEY_BEST_SCORE, 0);
-        int totalScore = prefs.getInt(KEY_TOTAL_SCORE, 0);
-        int totalQuizzes = prefs.getInt(KEY_TOTAL_QUIZZES, 0);
+        try {
+            JSONObject examDetails = new JSONObject(examDetailsJson);
+            int score = examDetails.getInt("score");
+            int totalQuestions = examDetails.getInt("totalQuestions");
+            resultTextView.setText("Your Score: " + score + " / " + totalQuestions);
 
-        // Update best score
-        if (score > bestScore) {
-            bestScore = score;
-            editor.putInt(KEY_BEST_SCORE, bestScore);
+            JSONArray answeredQuestions = examDetails.getJSONArray("answeredQuestions");
+            // Optional: Display detailed question info here if needed
+
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
-        // Update total score and quizzes
-        totalScore += score;
-        totalQuizzes++;
-        editor.putInt(KEY_TOTAL_SCORE, totalScore);
-        editor.putInt(KEY_TOTAL_QUIZZES, totalQuizzes);
+        previewButton.setOnClickListener(v -> {
+            Intent intent = new Intent(ResultActivity.this, PreviewActivity.class);
+            startActivity(intent);
+        });
 
-        // Save changes to SharedPreferences
-        editor.apply();
-
-        // Calculate average performance as percentage
-        float averagePerformance = (totalScore / (float) (totalQuestions * totalQuizzes)) * 100;
-
-        // Display the result
-        TextView resultTextView = findViewById(R.id.tv_result);
-        resultTextView.setText("Your Score: " + score + " / " + totalQuestions);
-
-        // Display additional statistics
-        TextView statsTextView = findViewById(R.id.tv_stats);
-        statsTextView.setText("Best Score: " + bestScore +
-                "\nTotal Contribution: " + totalScore +
-                "\nTotal Exams Taken: " + totalQuizzes +
-                "\nAverage Performance: " + String.format("%.2f", averagePerformance) + "%");
-
-        // Restart Quiz Button
-        Button restartButton = findViewById(R.id.btn_restart);
         restartButton.setOnClickListener(v -> {
             Intent intent = new Intent(ResultActivity.this, QuizActivity.class);
             startActivity(intent);
-            finish(); // Close ResultActivity
+            finish();
         });
     }
 }
