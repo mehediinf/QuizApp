@@ -6,17 +6,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    tools:context=".PreviewActivity">
+    android:orientation="vertical"
+    tools:context=".CurrentExamPreviewActivity">
 
 
 
     <LinearLayout
-        android:id="@+id/previewContainer"
+        android:id="@+id/currentExamPreviewContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:scrollbars="vertical" />
+        android:padding="8dp" />
+
+
+
+
 
 
 

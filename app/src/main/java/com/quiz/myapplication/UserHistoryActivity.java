@@ -53,7 +53,7 @@ public class UserHistoryActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, historyTitles);
         historyListView.setAdapter(adapter);
 
-        // Set an item click listener
+        // Set an item click listener to open the selected exam's details
         historyListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

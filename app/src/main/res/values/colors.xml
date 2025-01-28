@@ -8,6 +8,13 @@
     <color name="teal_700">#FF018786</color>
     <color name="allow_color">#22354F</color>
 
+    <color name="primaryText">#333333</color>
+    <color name="cardBackground">#f9f9f9</color>
+
+    <color name="correctAnswer">#4CAF50</color> <!-- Green for correct answer -->
+    <color name="selectedAnswer">#FF5252</color> <!-- Red for selected answer -->
+    <color name="defaultAnswer">#000000</color> <!-- Black for other options -->
+
 
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>

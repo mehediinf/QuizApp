@@ -26,26 +26,31 @@ public class ResultActivity extends AppCompatActivity {
         Button restartButton = findViewById(R.id.btn_restart);
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        String examDetailsJson = prefs.getString("examDetails", "");
+        String examHistoryJson = prefs.getString("ExamHistory", "[]");
 
         try {
-            JSONObject examDetails = new JSONObject(examDetailsJson);
-            int score = examDetails.getInt("score");
-            int totalQuestions = examDetails.getInt("totalQuestions");
-            resultTextView.setText("Your Score: " + score + " / " + totalQuestions);
-
-            JSONArray answeredQuestions = examDetails.getJSONArray("answeredQuestions");
-            // Optional: Display detailed question info here if needed
-
+            JSONArray examHistory = new JSONArray(examHistoryJson);
+            if (examHistory.length() > 0) {
+                // Get the last exam's details (latest exam result)
+                JSONObject latestExam = examHistory.getJSONObject(examHistory.length() - 1);
+                int score = latestExam.getInt("score");
+                int totalQuestions = latestExam.getInt("totalQuestions");
+                resultTextView.setText("Your Score: " + score + " / " + totalQuestions);
+            } else {
+                resultTextView.setText("No exam history available.");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+        // Preview button action to show the current exam's preview
         previewButton.setOnClickListener(v -> {
-            Intent intent = new Intent(ResultActivity.this, PreviewActivity.class);
+            Intent intent = new Intent(ResultActivity.this, CurrentExamPreviewActivity.class);
+            intent.putExtra("examHistory", examHistoryJson);  // Pass the exam history to preview
             startActivity(intent);
         });
 
+        // Restart button action to restart the quiz
         restartButton.setOnClickListener(v -> {
             Intent intent = new Intent(ResultActivity.this, QuizActivity.class);
             startActivity(intent);
